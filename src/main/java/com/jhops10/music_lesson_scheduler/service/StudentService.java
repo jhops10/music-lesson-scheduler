@@ -21,4 +21,10 @@ public class StudentService {
         return StudentResponseDTO.fromEntity(saved);
     }
 
+    public List<StudentResponseDTO> getAll() {
+        return studentRepository.findAll().stream()
+                .map(StudentResponseDTO::fromEntity)
+                .toList();
+    }
+
 }
