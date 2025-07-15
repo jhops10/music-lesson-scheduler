@@ -2,6 +2,7 @@ package com.jhops10.music_lesson_scheduler.controller;
 
 import com.jhops10.music_lesson_scheduler.dto.student.StudentRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.student.StudentResponseDTO;
+import com.jhops10.music_lesson_scheduler.dto.student.StudentUpdateDTO;
 import com.jhops10.music_lesson_scheduler.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +35,11 @@ public class StudentController {
     public ResponseEntity<StudentResponseDTO> getStudentById(@PathVariable("id") Long id) {
         StudentResponseDTO student = studentService.getById(id);
         return ResponseEntity.ok().body(student);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<StudentResponseDTO> updateStudentById(@PathVariable("id") Long id, @RequestBody StudentUpdateDTO updateDTO) {
+        StudentResponseDTO updated = studentService.update(id, updateDTO);
+        return ResponseEntity.ok().body(updated);
     }
 }
