@@ -29,4 +29,10 @@ public class StudentController {
         List<StudentResponseDTO> students = studentService.getAll();
         return ResponseEntity.ok().body(students);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<StudentResponseDTO> getStudentById(@PathVariable("id") Long id) {
+        StudentResponseDTO student = studentService.getById(id);
+        return ResponseEntity.ok().body(student);
+    }
 }
