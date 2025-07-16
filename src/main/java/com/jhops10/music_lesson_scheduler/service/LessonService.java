@@ -2,6 +2,7 @@ package com.jhops10.music_lesson_scheduler.service;
 
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonResponseDTO;
+import com.jhops10.music_lesson_scheduler.dto.lesson.LessonUpdateDTO;
 import com.jhops10.music_lesson_scheduler.exceptions.LessonNotFoundException;
 import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Lesson;
@@ -44,6 +45,15 @@ public class LessonService {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new LessonNotFoundException("Aula com id " + id + " não encontrada."));
         return LessonResponseDTO.fromEntity(lesson);
+    }
+
+    public LessonResponseDTO update(Long id, LessonUpdateDTO updateDTO) {
+        Lesson existing = lessonRepository.findById(id)
+                .orElseThrow(() -> new LessonNotFoundException("Aula com id " + id + " não encontrada."));
+
+        updateDTO.applyUpdatesTo(existing);
+        Lesson updated = lessonRepository.save(existing);
+        return LessonResponseDTO.fromEntity(updated);
     }
 
 }
