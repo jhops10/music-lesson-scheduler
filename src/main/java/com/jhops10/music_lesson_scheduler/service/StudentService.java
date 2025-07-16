@@ -45,4 +45,10 @@ public class StudentService {
         return StudentResponseDTO.fromEntity(updated);
     }
 
+    public void delete(Long id) {
+        if (!studentRepository.existsById(id)) {
+            throw new StudentNotFoundException("Aluno com o id " + id + " não encontrado.");
+        }
+        studentRepository.deleteById(id);
+    }
 }
