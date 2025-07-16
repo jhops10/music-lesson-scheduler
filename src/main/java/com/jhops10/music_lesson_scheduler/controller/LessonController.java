@@ -29,4 +29,10 @@ public class LessonController {
         List<LessonResponseDTO> lessons = lessonService.getAll();
         return ResponseEntity.ok().body(lessons);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LessonResponseDTO> getLessonById(@PathVariable("id") Long id) {
+        LessonResponseDTO lesson = lessonService.getById(id);
+        return ResponseEntity.ok().body(lesson);
+    }
 }
