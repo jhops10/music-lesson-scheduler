@@ -42,4 +42,10 @@ public class LessonController {
         LessonResponseDTO updated = lessonService.update(id, updateDTO);
         return ResponseEntity.ok().body(updated);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteLessonById(@PathVariable("id") Long id) {
+        lessonService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
