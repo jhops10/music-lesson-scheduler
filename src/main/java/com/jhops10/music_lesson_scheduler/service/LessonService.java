@@ -10,6 +10,8 @@ import com.jhops10.music_lesson_scheduler.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class LessonService {
@@ -30,4 +32,12 @@ public class LessonService {
         Lesson saved = lessonRepository.save(lesson);
         return LessonResponseDTO.fromEntity(saved);
     }
+
+    public List<LessonResponseDTO> getAll() {
+        return lessonRepository.findAll().stream()
+                .map(LessonResponseDTO::fromEntity)
+                .toList();
+    }
+
+
 }
