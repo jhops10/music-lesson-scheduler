@@ -56,4 +56,11 @@ public class LessonService {
         return LessonResponseDTO.fromEntity(updated);
     }
 
+    public void delete(Long id) {
+        if (!lessonRepository.existsById(id)) {
+            throw new LessonNotFoundException("Aula com id " + id + " não encontrada.");
+        }
+        lessonRepository.deleteById(id);
+    }
+
 }
