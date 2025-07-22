@@ -1,6 +1,8 @@
 package com.jhops10.music_lesson_scheduler.scheduler;
 
 import com.jhops10.music_lesson_scheduler.model.Lesson;
+import com.jhops10.music_lesson_scheduler.model.LessonNotificationLog;
+import com.jhops10.music_lesson_scheduler.repository.LessonNotificationLogRepository;
 import com.jhops10.music_lesson_scheduler.repository.LessonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,6 +17,7 @@ import java.util.List;
 public class LessonReminderScheduler {
 
     private final LessonRepository lessonRepository;
+    private final LessonNotificationLogRepository notificationLogRepository;
 
 
     @Scheduled(fixedRate = 60000)
@@ -37,6 +40,7 @@ public class LessonReminderScheduler {
                         lesson.getNotifyBeforeMinutes());
                 lesson.setNotified(true);
                 notifiedLessons.add(lesson);
+                createNotificationLog(lesson, now);
             }
         }
 
@@ -44,4 +48,17 @@ public class LessonReminderScheduler {
             lessonRepository.saveAll(notifiedLessons);
         }
     }
+
+    public void createNotificationLog(Lesson lesson, LocalDateTime now) {
+        LessonNotificationLog notificationLog = LessonNotificationLog.builder()
+                .lesson(lesson)
+                .notifiedAt(now)
+                .message("O aluno " + lesson.getStudent().getStudentName() + " foi notificado.")
+                .deliveryMethod("Console Log")
+                .build();
+
+        notificationLogRepository.save(notificationLog);
+    }
+
+
 }
