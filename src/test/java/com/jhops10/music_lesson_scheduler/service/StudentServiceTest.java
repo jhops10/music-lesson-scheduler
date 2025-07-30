@@ -65,4 +65,32 @@ class StudentServiceTest {
         verifyNoMoreInteractions(studentRepository);
     }
 
+    @Test
+    void getAllStudents_shouldReturnAllStudents_whenStudentsExist() {
+        when(studentRepository.findAll()).thenReturn(List.of(defaultStudent));
+
+        List<StudentResponseDTO> sut = studentService.getAll();
+
+        assertEquals(1, sut.size());
+        assertEquals(1, sut.get(0).id());
+        assertEquals("Name Example", sut.get(0).studentName());
+        assertEquals("Example Instrument Name", sut.get(0).instrument());
+
+        verify(studentRepository).findAll();
+        verifyNoMoreInteractions(studentRepository);
+    }
+
+    @Test
+    void getAllStudents_shouldReturnEmptyList_whenStudentsDoNotExist() {
+        when(studentRepository.findAll()).thenReturn(List.of());
+
+        List<StudentResponseDTO> sut = studentService.getAll();
+
+        assertNotNull(sut);
+        assertTrue(sut.isEmpty());
+
+        verify(studentRepository).findAll();
+        verifyNoMoreInteractions(studentRepository);
+    }
+
 }
