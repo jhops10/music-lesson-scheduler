@@ -1,8 +1,8 @@
 package com.jhops10.music_lesson_scheduler.service;
 
-import com.jhops10.music_lesson_scheduler.dto.lesson.LessonRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.student.StudentRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.student.StudentResponseDTO;
+import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Lesson;
 import com.jhops10.music_lesson_scheduler.model.Student;
 import com.jhops10.music_lesson_scheduler.repository.StudentRepository;
@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -93,4 +94,33 @@ class StudentServiceTest {
         verifyNoMoreInteractions(studentRepository);
     }
 
+    @Test
+    void getStudentById_shouldReturnStudent_whenIdExists() {
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(defaultStudent));
+
+        StudentResponseDTO sut = studentService.getById(1L);
+
+        assertNotNull(sut);
+        assertEquals(1, sut.id());
+        assertEquals("Name Example", sut.studentName());
+        assertEquals("Example Instrument Name", sut.instrument());
+
+        verify(studentRepository).findById(1L);
+        verifyNoMoreInteractions(studentRepository);
+    }
+
+    @Test
+    void getStudentById_shouldThrowException_whenIdDoesNotExist() {
+        when(studentRepository.findById(9999999L)).thenReturn(Optional.empty());
+
+        assertThrows(StudentNotFoundException.class, () -> studentService.getById(9999999L));
+
+        verify(studentRepository).findById(9999999L);
+        verifyNoMoreInteractions(studentRepository);
+
+
+    }
+
 }
+
+
