@@ -157,6 +157,27 @@ class StudentServiceTest {
 
     }
 
+    @Test
+    void deleteStudent_shouldRemoveStudent_whenIdExists() {
+        when(studentRepository.existsById(defaultId)).thenReturn(true);
+
+        studentService.delete(defaultId);
+
+        verify(studentRepository).existsById(defaultId);
+        verify(studentRepository).deleteById(defaultId);
+        verifyNoMoreInteractions(studentRepository);
+    }
+
+    @Test
+    void deleteStudent_shouldThrowException_whenIdDoesNotExist() {
+        when(studentRepository.existsById(nonExistingId)).thenReturn(false);
+
+        assertThrows(StudentNotFoundException.class, () -> studentService.delete(nonExistingId));
+
+        verify(studentRepository).existsById(nonExistingId);
+        verifyNoMoreInteractions(studentRepository);
+    }
+
 }
 
 
