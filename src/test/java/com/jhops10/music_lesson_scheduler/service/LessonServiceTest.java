@@ -14,7 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,4 +103,34 @@ class LessonServiceTest {
         verifyNoMoreInteractions(studentRepository);
     }
 
+    @Test
+    void getAll_shouldReturnAllLessons_whenLessonsExist() {
+        when(lessonRepository.findAll()).thenReturn(List.of(defaultLesson));
+
+        List<LessonResponseDTO> sut = lessonService.getAll();
+
+        assertEquals(1, sut.size());
+        assertEquals(1, sut.get(0).id());
+        assertEquals(fixedStartTime, sut.get(0).startTime());
+        assertEquals("Name Example", sut.get(0).studentName());
+        assertEquals("Example Instrument Name", sut.get(0).instrument());
+        assertEquals(1, sut.get(0).notityBeforeMinutes());
+
+        verify(lessonRepository).findAll();
+        verifyNoMoreInteractions(lessonRepository);
+
+    }
+
+    @Test
+    void getAll_shouldReturnEmptyList_whenLessonsDosNotExist() {
+        when(lessonRepository.findAll()).thenReturn(List.of());
+
+        List<LessonResponseDTO> sut = lessonService.getAll();
+
+        assertNotNull(sut);
+        assertTrue(sut.isEmpty());
+
+        verify(lessonRepository).findAll();
+        verifyNoMoreInteractions(lessonRepository);
+    }
 }
