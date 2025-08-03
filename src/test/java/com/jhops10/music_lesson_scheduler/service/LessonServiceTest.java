@@ -2,6 +2,8 @@ package com.jhops10.music_lesson_scheduler.service;
 
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonResponseDTO;
+import com.jhops10.music_lesson_scheduler.dto.lesson.LessonUpdateDTO;
+import com.jhops10.music_lesson_scheduler.exceptions.LessonNotFoundException;
 import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Lesson;
 import com.jhops10.music_lesson_scheduler.model.Student;
@@ -39,6 +41,7 @@ class LessonServiceTest {
     private final Long defaultId = 1L;
     private final Long nonExistingId = 9999999L;
     private final LocalDateTime fixedStartTime = LocalDateTime.of(2025, 8, 15, 15,0);
+    private final LocalDateTime updatedStartTime = LocalDateTime.of(2025, 9, 20, 14,0);
     private Student defaultStudent;
     private List<Lesson> lessons = new ArrayList<>();
     private Lesson defaultLesson;
@@ -122,7 +125,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void getAll_shouldReturnEmptyList_whenLessonsDosNotExist() {
+    void getAll_shouldReturnEmptyList_whenLessonsDoNotExist() {
         when(lessonRepository.findAll()).thenReturn(List.of());
 
         List<LessonResponseDTO> sut = lessonService.getAll();
@@ -133,4 +136,93 @@ class LessonServiceTest {
         verify(lessonRepository).findAll();
         verifyNoMoreInteractions(lessonRepository);
     }
+
+    @Test
+    void getById_shouldReturnLesson_whenIdExists() {
+        when(lessonRepository.findById(defaultId)).thenReturn(Optional.of(defaultLesson));
+
+        LessonResponseDTO sut = lessonService.getById(defaultId);
+
+        assertNotNull(sut);
+        assertEquals(1, sut.id());
+        assertEquals(fixedStartTime, sut.startTime());
+        assertEquals("Name Example", sut.studentName());
+        assertEquals("Example Instrument Name", sut.instrument());
+        assertEquals(1, sut.notityBeforeMinutes());
+
+        verify(lessonRepository).findById(defaultId);
+        verifyNoMoreInteractions(lessonRepository);
+    }
+
+    @Test
+    void getById_shouldThrowException_whenIdDoesNotExist() {
+        when(lessonRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+        assertThrows(LessonNotFoundException.class, () -> lessonService.getById(nonExistingId));
+
+        verify(lessonRepository).findById(nonExistingId);
+        verifyNoMoreInteractions(lessonRepository);
+
+    }
+
+    @Test
+    void updateLesson_shouldReturnUpdatedLesson_whenIdExists() {
+
+
+        LessonUpdateDTO updateDTO = new LessonUpdateDTO(updatedStartTime, 2);
+        Lesson updatedLesson = createNewLesson(defaultLesson.getId(), updateDTO.startTime(), defaultStudent, updateDTO.notifyBeforeMinutes(), false);
+
+        when(lessonRepository.findById(defaultId)).thenReturn(Optional.of(defaultLesson));
+        when(lessonRepository.save(any(Lesson.class))).thenReturn(updatedLesson);
+
+        LessonResponseDTO sut = lessonService.update(defaultId, updateDTO);
+
+        assertNotNull(sut);
+        assertEquals(updatedLesson.getId(), sut.id());
+        assertEquals(updatedLesson.getStartTime(), sut.startTime());
+        assertEquals(updatedLesson.getNotifyBeforeMinutes(), sut.notityBeforeMinutes());
+        assertEquals(updatedLesson.getStudent().getStudentName(), sut.studentName());
+        assertEquals(updatedLesson.getStudent().getInstrument(), sut.instrument());
+
+        verify(lessonRepository).findById(defaultId);
+        verify(lessonRepository).save(any(Lesson.class));
+        verifyNoMoreInteractions(lessonRepository);
+
+    }
+
+    @Test
+    void updateLesson_shouldThrowException_whenIdDoesNotExist() {
+        LessonUpdateDTO updateDTO = new LessonUpdateDTO(updatedStartTime, 2);
+
+        when(lessonRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+        assertThrows(LessonNotFoundException.class, () -> lessonService.update(nonExistingId, updateDTO));
+
+        verify(lessonRepository).findById(nonExistingId);
+        verifyNoMoreInteractions(lessonRepository);
+    }
+
+    @Test
+    void deleteLesson_shouldRemoveLesson_whenIdExists() {
+        when(lessonRepository.existsById(defaultId)).thenReturn(true);
+
+        lessonService.delete(defaultId);
+
+        verify(lessonRepository).existsById(defaultId);
+        verify(lessonRepository).deleteById(defaultId);
+        verifyNoMoreInteractions(lessonRepository);
+
+    }
+
+    @Test
+    void deleteLesson_shouldThrowException_whenIdDoesNotExist() {
+        when(lessonRepository.existsById(nonExistingId)).thenReturn(false);
+
+        assertThrows(LessonNotFoundException.class, () -> lessonService.delete(nonExistingId));
+
+        verify(lessonRepository).existsById(nonExistingId);
+        verifyNoMoreInteractions(lessonRepository);
+    }
+
+
 }
