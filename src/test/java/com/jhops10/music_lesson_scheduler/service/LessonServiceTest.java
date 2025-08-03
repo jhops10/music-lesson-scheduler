@@ -202,5 +202,27 @@ class LessonServiceTest {
         verifyNoMoreInteractions(lessonRepository);
     }
 
+    @Test
+    void deleteLesson_shouldRemoveLesson_whenIdExists() {
+        when(lessonRepository.existsById(defaultId)).thenReturn(true);
+
+        lessonService.delete(defaultId);
+
+        verify(lessonRepository).existsById(defaultId);
+        verify(lessonRepository).deleteById(defaultId);
+        verifyNoMoreInteractions(lessonRepository);
+
+    }
+
+    @Test
+    void deleteLesson_shouldThrowException_whenIdDoesNotExist() {
+        when(lessonRepository.existsById(nonExistingId)).thenReturn(false);
+
+        assertThrows(LessonNotFoundException.class, () -> lessonService.delete(nonExistingId));
+
+        verify(lessonRepository).existsById(nonExistingId);
+        verifyNoMoreInteractions(lessonRepository);
+    }
+
 
 }
