@@ -2,6 +2,7 @@ package com.jhops10.music_lesson_scheduler.service;
 
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonResponseDTO;
+import com.jhops10.music_lesson_scheduler.exceptions.LessonNotFoundException;
 import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Lesson;
 import com.jhops10.music_lesson_scheduler.model.Student;
@@ -122,7 +123,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void getAll_shouldReturnEmptyList_whenLessonsDosNotExist() {
+    void getAll_shouldReturnEmptyList_whenLessonsDoNotExist() {
         when(lessonRepository.findAll()).thenReturn(List.of());
 
         List<LessonResponseDTO> sut = lessonService.getAll();
@@ -132,5 +133,33 @@ class LessonServiceTest {
 
         verify(lessonRepository).findAll();
         verifyNoMoreInteractions(lessonRepository);
+    }
+
+    @Test
+    void getById_shouldReturnLesson_whenIdExists() {
+        when(lessonRepository.findById(defaultId)).thenReturn(Optional.of(defaultLesson));
+
+        LessonResponseDTO sut = lessonService.getById(defaultId);
+
+        assertNotNull(sut);
+        assertEquals(1, sut.id());
+        assertEquals(fixedStartTime, sut.startTime());
+        assertEquals("Name Example", sut.studentName());
+        assertEquals("Example Instrument Name", sut.instrument());
+        assertEquals(1, sut.notityBeforeMinutes());
+
+        verify(lessonRepository).findById(defaultId);
+        verifyNoMoreInteractions(lessonRepository);
+    }
+
+    @Test
+    void getById_shouldThrowException_whenIdDoesNotExist() {
+        when(lessonRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+        assertThrows(LessonNotFoundException.class, () -> lessonService.getById(nonExistingId));
+
+        verify(lessonRepository).findById(nonExistingId);
+        verifyNoMoreInteractions(lessonRepository);
+
     }
 }
