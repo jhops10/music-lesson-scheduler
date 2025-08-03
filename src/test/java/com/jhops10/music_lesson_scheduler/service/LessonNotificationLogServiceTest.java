@@ -103,4 +103,33 @@ class LessonNotificationLogServiceTest {
         verifyNoMoreInteractions(lessonNotificationLogRepository);
     }
 
+    @Test
+    void getAllByDeliveryMethod_shouldReturnLogs_whenLogsExistForDeliveryMethod() {
+        when(lessonNotificationLogRepository.findByDeliveryMethodIgnoreCase("method")).thenReturn(List.of(defaultNotificationLog));
+
+        List<LessonNotificationLogResponseDTO> sut = lessonNotificationLogService.getAllByDeliveryMethod("method");
+
+        assertEquals(1, sut.size());
+        assertEquals(defaultId, sut.get(0).id());
+        assertEquals(defaultId, sut.get(0).lessonId());
+        assertEquals(defaultNotificationLog.getNotifiedAt(), sut.get(0).notifiedAt());
+        assertEquals(defaultNotificationLog.getMessage(), sut.get(0).message());
+        assertEquals(defaultNotificationLog.getDeliveryMethod(), sut.get(0).deliveryMethod());
+
+        verify(lessonNotificationLogRepository).findByDeliveryMethodIgnoreCase("method");
+        verifyNoMoreInteractions(lessonNotificationLogRepository);
+    }
+
+    @Test
+    void getAllByDeliveryMethod_shouldReturnEmptyList_whenLogsDoNotExist() {
+        when(lessonNotificationLogRepository.findByDeliveryMethodIgnoreCase("method")).thenReturn(List.of());
+
+        List<LessonNotificationLogResponseDTO> sut = lessonNotificationLogService.getAllByDeliveryMethod("method");
+
+        assertNotNull(sut);
+        assertTrue(sut.isEmpty());
+
+        verify(lessonNotificationLogRepository).findByDeliveryMethodIgnoreCase("method");
+        verifyNoMoreInteractions(lessonNotificationLogRepository);
+    }
 }
