@@ -19,6 +19,8 @@ Sistema de agendamento e notificação de aulas de música com envio automático
 - JavaMailSender
 - Springdoc OpenAPI (Swagger)
 - MailTrap (teste de envio de e-mails)
+- Mockito
+- AssertJ
 
 ## 📌 Endpoints da API
 
