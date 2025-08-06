@@ -9,6 +9,7 @@ import com.jhops10.music_lesson_scheduler.model.Lesson;
 import com.jhops10.music_lesson_scheduler.model.Student;
 import com.jhops10.music_lesson_scheduler.repository.LessonRepository;
 import com.jhops10.music_lesson_scheduler.repository.StudentRepository;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,12 +17,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.*;
+
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -40,36 +44,39 @@ class LessonServiceTest {
 
     private final Long defaultId = 1L;
     private final Long nonExistingId = 9999999L;
-    private final LocalDateTime fixedStartTime = LocalDateTime.of(2025, 8, 15, 15,0);
-    private final LocalDateTime updatedStartTime = LocalDateTime.of(2025, 9, 20, 14,0);
+    private final LocalDateTime fixedStartTime = LocalDateTime.of(2025, 8, 15, 15, 0);
+    private final LocalDateTime updatedStartTime = LocalDateTime.of(2025, 9, 20, 14, 0);
     private Student defaultStudent;
-    private List<Lesson> lessons = new ArrayList<>();
     private Lesson defaultLesson;
 
 
     @BeforeEach
     void setUp() {
-        defaultStudent = createNewStudent(defaultId, "Name Example", "Example Instrument Name", lessons);
-        defaultLesson = createNewLesson(defaultId, fixedStartTime, defaultStudent, 1, false);
+        defaultStudent = createNewStudent(defaultId);
+        defaultLesson = createNewLesson(defaultId, fixedStartTime);
     }
 
-    private Student createNewStudent(Long id, String studentName, String instrument, List<Lesson> lessons) {
-        return Student.builder()
-                .id(id)
-                .studentName(studentName)
-                .instrument(instrument)
-                .lessons(lessons)
-                .build();
+    private Student createNewStudent(Long id) {
+        return Instancio.of(Student.class)
+                .set(field(Student::getId), id)
+                .set(field(Student::getLessons), new ArrayList<>())
+                .create();
     }
 
-    private Lesson createNewLesson(Long id, LocalDateTime startTime, Student student, Integer notifyBeforeMinutes, Boolean notified) {
-        return Lesson.builder()
-                .id(id)
-                .startTime(startTime)
-                .student(student)
-                .notifyBeforeMinutes(notifyBeforeMinutes)
-                .notified(notified)
-                .build();
+    private Lesson createNewLesson(Long id, LocalDateTime startTime) {
+        return Instancio.of(Lesson.class)
+                .set(field(Lesson::getId), defaultId)
+                .set(field(Lesson::getStartTime), fixedStartTime)
+                .set(field(Lesson::getNotified), false)
+                .create();
+    }
+
+    private LessonResponseDTO expectedLessonResponseDTO() {
+        return new LessonResponseDTO(defaultLesson.getId(),
+                defaultLesson.getStartTime(),
+                defaultLesson.getNotifyBeforeMinutes(),
+                defaultLesson.getStudent().getStudentName(),
+                defaultLesson.getStudent().getInstrument());
     }
 
     @Test
@@ -81,13 +88,10 @@ class LessonServiceTest {
 
         LessonResponseDTO sut = lessonService.create(requestDTO);
 
-        assertNotNull(sut);
-        assertEquals(defaultLesson.getId(), sut.id());
-        assertEquals(defaultLesson.getStudent().getStudentName(), sut.studentName());
-        assertEquals(defaultLesson.getStudent().getInstrument(), sut.instrument());
-        assertEquals(defaultLesson.getStartTime(), sut.startTime());
-        assertEquals(defaultLesson.getNotifyBeforeMinutes(), sut.notityBeforeMinutes());
-        assertEquals(defaultLesson.getNotified(), false);
+        assertThat(sut)
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(expectedLessonResponseDTO());
 
         verify(studentRepository).findById(defaultId);
         verify(lessonRepository).save(any(Lesson.class));
@@ -100,7 +104,8 @@ class LessonServiceTest {
         LessonRequestDTO requestDTO = new LessonRequestDTO(nonExistingId, defaultLesson.getStartTime(), defaultLesson.getNotifyBeforeMinutes());
         when(studentRepository.findById(nonExistingId)).thenReturn(Optional.empty());
 
-        assertThrows(StudentNotFoundException.class, () -> lessonService.create(requestDTO));
+        assertThatThrownBy(() -> lessonService.create(requestDTO))
+                .isInstanceOf(StudentNotFoundException.class);
 
         verify(studentRepository).findById(nonExistingId);
         verifyNoMoreInteractions(studentRepository);
@@ -112,12 +117,10 @@ class LessonServiceTest {
 
         List<LessonResponseDTO> sut = lessonService.getAll();
 
-        assertEquals(1, sut.size());
-        assertEquals(1, sut.get(0).id());
-        assertEquals(fixedStartTime, sut.get(0).startTime());
-        assertEquals("Name Example", sut.get(0).studentName());
-        assertEquals("Example Instrument Name", sut.get(0).instrument());
-        assertEquals(1, sut.get(0).notityBeforeMinutes());
+        assertThat(sut)
+                .isNotNull()
+                .usingRecursiveFieldByFieldElementComparator()
+                .containsExactly(expectedLessonResponseDTO());
 
         verify(lessonRepository).findAll();
         verifyNoMoreInteractions(lessonRepository);
@@ -130,8 +133,9 @@ class LessonServiceTest {
 
         List<LessonResponseDTO> sut = lessonService.getAll();
 
-        assertNotNull(sut);
-        assertTrue(sut.isEmpty());
+        assertThat(sut)
+                .isNotNull()
+                .isEmpty();
 
         verify(lessonRepository).findAll();
         verifyNoMoreInteractions(lessonRepository);
@@ -143,12 +147,10 @@ class LessonServiceTest {
 
         LessonResponseDTO sut = lessonService.getById(defaultId);
 
-        assertNotNull(sut);
-        assertEquals(1, sut.id());
-        assertEquals(fixedStartTime, sut.startTime());
-        assertEquals("Name Example", sut.studentName());
-        assertEquals("Example Instrument Name", sut.instrument());
-        assertEquals(1, sut.notityBeforeMinutes());
+        assertThat(sut)
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(expectedLessonResponseDTO());
 
         verify(lessonRepository).findById(defaultId);
         verifyNoMoreInteractions(lessonRepository);
@@ -158,7 +160,8 @@ class LessonServiceTest {
     void getById_shouldThrowException_whenIdDoesNotExist() {
         when(lessonRepository.findById(nonExistingId)).thenReturn(Optional.empty());
 
-        assertThrows(LessonNotFoundException.class, () -> lessonService.getById(nonExistingId));
+        assertThatThrownBy(() -> lessonService.getById(nonExistingId))
+                .isInstanceOf(LessonNotFoundException.class);
 
         verify(lessonRepository).findById(nonExistingId);
         verifyNoMoreInteractions(lessonRepository);
@@ -167,22 +170,26 @@ class LessonServiceTest {
 
     @Test
     void updateLesson_shouldReturnUpdatedLesson_whenIdExists() {
-
-
         LessonUpdateDTO updateDTO = new LessonUpdateDTO(updatedStartTime, 2);
-        Lesson updatedLesson = createNewLesson(defaultLesson.getId(), updateDTO.startTime(), defaultStudent, updateDTO.notifyBeforeMinutes(), false);
+        Lesson updatedLesson = createNewLesson(defaultLesson.getId(), updateDTO.startTime());
 
         when(lessonRepository.findById(defaultId)).thenReturn(Optional.of(defaultLesson));
         when(lessonRepository.save(any(Lesson.class))).thenReturn(updatedLesson);
 
         LessonResponseDTO sut = lessonService.update(defaultId, updateDTO);
 
-        assertNotNull(sut);
-        assertEquals(updatedLesson.getId(), sut.id());
-        assertEquals(updatedLesson.getStartTime(), sut.startTime());
-        assertEquals(updatedLesson.getNotifyBeforeMinutes(), sut.notityBeforeMinutes());
-        assertEquals(updatedLesson.getStudent().getStudentName(), sut.studentName());
-        assertEquals(updatedLesson.getStudent().getInstrument(), sut.instrument());
+        assertThat(sut)
+                .isNotNull()
+                .extracting(
+                        LessonResponseDTO::id,
+                        LessonResponseDTO::startTime,
+                        LessonResponseDTO::notityBeforeMinutes
+                )
+                .containsExactly(
+                        updatedLesson.getId(),
+                        updatedLesson.getStartTime(),
+                        updatedLesson.getNotifyBeforeMinutes()
+                );
 
         verify(lessonRepository).findById(defaultId);
         verify(lessonRepository).save(any(Lesson.class));
@@ -196,7 +203,8 @@ class LessonServiceTest {
 
         when(lessonRepository.findById(nonExistingId)).thenReturn(Optional.empty());
 
-        assertThrows(LessonNotFoundException.class, () -> lessonService.update(nonExistingId, updateDTO));
+        assertThatThrownBy(() -> lessonService.update(nonExistingId, updateDTO))
+                .isInstanceOf(LessonNotFoundException.class);
 
         verify(lessonRepository).findById(nonExistingId);
         verifyNoMoreInteractions(lessonRepository);
@@ -218,7 +226,8 @@ class LessonServiceTest {
     void deleteLesson_shouldThrowException_whenIdDoesNotExist() {
         when(lessonRepository.existsById(nonExistingId)).thenReturn(false);
 
-        assertThrows(LessonNotFoundException.class, () -> lessonService.delete(nonExistingId));
+        assertThatThrownBy(() -> lessonService.delete(nonExistingId))
+                .isInstanceOf(LessonNotFoundException.class);
 
         verify(lessonRepository).existsById(nonExistingId);
         verifyNoMoreInteractions(lessonRepository);
