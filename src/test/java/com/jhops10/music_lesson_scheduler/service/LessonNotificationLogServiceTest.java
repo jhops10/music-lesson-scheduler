@@ -5,6 +5,7 @@ import com.jhops10.music_lesson_scheduler.model.Lesson;
 import com.jhops10.music_lesson_scheduler.model.LessonNotificationLog;
 import com.jhops10.music_lesson_scheduler.model.Student;
 import com.jhops10.music_lesson_scheduler.repository.LessonNotificationLogRepository;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +17,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.*;
+import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -29,47 +32,52 @@ class LessonNotificationLogServiceTest {
     private LessonNotificationLogRepository lessonNotificationLogRepository;
 
     private final Long defaultId = 1L;
-    private final LocalDateTime fixedExampleTime = LocalDateTime.of(2025, 8, 15, 15,0);
+    private final LocalDateTime fixedExampleTime = LocalDateTime.of(2025, 8, 15, 15, 0);
 
     private LessonNotificationLog defaultNotificationLog;
     private Lesson defaultLesson;
     private Student defaultStudent;
-    private List<Lesson> lessons = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        defaultStudent = createNewStudent(defaultId, "Name Example", "Example Instrument Name", lessons);
-        defaultLesson = createNewLesson(defaultId, fixedExampleTime, defaultStudent, 1, false);
-        defaultNotificationLog = createNewNotificationLog(defaultId, defaultLesson, fixedExampleTime, "Message", "Method");
+        defaultStudent = createNewStudent(defaultId);
+        defaultLesson = createNewLesson(defaultId, fixedExampleTime);
+        defaultNotificationLog = createNewNotificationLog(defaultId, defaultLesson);
     }
 
-    private LessonNotificationLog createNewNotificationLog(Long id, Lesson lesson, LocalDateTime notifiedAt, String message, String deliveryMethod) {
-        return LessonNotificationLog.builder()
-                .id(id)
-                .lesson(lesson)
-                .notifiedAt(notifiedAt)
-                .message(message)
-                .deliveryMethod(deliveryMethod)
-                .build();
+    private LessonNotificationLog createNewNotificationLog(Long id, Lesson lesson) {
+        return Instancio.of(LessonNotificationLog.class)
+                .set(field(LessonNotificationLog::getId), defaultId)
+                .set(field(LessonNotificationLog::getLesson), lesson)
+                .set(field(LessonNotificationLog::getNotifiedAt), fixedExampleTime)
+                .create();
+
     }
 
-    private Lesson createNewLesson(Long id, LocalDateTime startTime, Student student, Integer notifyBeforeMinutes, Boolean notified) {
-        return Lesson.builder()
-                .id(id)
-                .startTime(startTime)
-                .student(student)
-                .notifyBeforeMinutes(notifyBeforeMinutes)
-                .notified(notified)
-                .build();
+    private Lesson createNewLesson(Long id, LocalDateTime startTime) {
+        return Instancio.of(Lesson.class)
+                .set(field(Lesson::getId), defaultId)
+                .set(field(Lesson::getStartTime), fixedExampleTime)
+                .set(field(Lesson::getNotified), false)
+                .create();
     }
 
-    private Student createNewStudent(Long id, String studentName, String instrument, List<Lesson> lessons) {
-        return Student.builder()
-                .id(id)
-                .studentName(studentName)
-                .instrument(instrument)
-                .lessons(lessons)
-                .build();
+    private Student createNewStudent(Long id) {
+        return Instancio.of(Student.class)
+                .set(field(Student::getId), id)
+                .set(field(Student::getLessons), new ArrayList<>())
+                .create();
+    }
+
+    private LessonNotificationLogResponseDTO expectedLessonLogNotificationDTO() {
+        return new LessonNotificationLogResponseDTO(
+                defaultNotificationLog.getId(),
+                defaultNotificationLog.getLesson().getId(),
+                defaultNotificationLog.getLesson().getStudent().getStudentName(),
+                defaultNotificationLog.getNotifiedAt(),
+                defaultNotificationLog.getMessage(),
+                defaultNotificationLog.getDeliveryMethod()
+        );
     }
 
     @Test
@@ -78,12 +86,10 @@ class LessonNotificationLogServiceTest {
 
         List<LessonNotificationLogResponseDTO> sut = lessonNotificationLogService.getAll();
 
-        assertEquals(1, sut.size());
-        assertEquals(defaultId, sut.get(0).id());
-        assertEquals(defaultId, sut.get(0).lessonId());
-        assertEquals(defaultNotificationLog.getNotifiedAt(), sut.get(0).notifiedAt());
-        assertEquals(defaultNotificationLog.getMessage(), sut.get(0).message());
-        assertEquals(defaultNotificationLog.getDeliveryMethod(), sut.get(0).deliveryMethod());
+        assertThat(sut)
+                .isNotNull()
+                .usingRecursiveFieldByFieldElementComparator()
+                .containsExactly(expectedLessonLogNotificationDTO());
 
         verify(lessonNotificationLogRepository).findAllByOrderByNotifiedAtDesc();
         verifyNoMoreInteractions(lessonNotificationLogRepository);
@@ -96,8 +102,9 @@ class LessonNotificationLogServiceTest {
 
         List<LessonNotificationLogResponseDTO> sut = lessonNotificationLogService.getAll();
 
-        assertNotNull(sut);
-        assertTrue(sut.isEmpty());
+        assertThat(sut)
+                .isNotNull()
+                .isEmpty();
 
         verify(lessonNotificationLogRepository).findAllByOrderByNotifiedAtDesc();
         verifyNoMoreInteractions(lessonNotificationLogRepository);
@@ -109,12 +116,10 @@ class LessonNotificationLogServiceTest {
 
         List<LessonNotificationLogResponseDTO> sut = lessonNotificationLogService.getAllByDeliveryMethod("method");
 
-        assertEquals(1, sut.size());
-        assertEquals(defaultId, sut.get(0).id());
-        assertEquals(defaultId, sut.get(0).lessonId());
-        assertEquals(defaultNotificationLog.getNotifiedAt(), sut.get(0).notifiedAt());
-        assertEquals(defaultNotificationLog.getMessage(), sut.get(0).message());
-        assertEquals(defaultNotificationLog.getDeliveryMethod(), sut.get(0).deliveryMethod());
+        assertThat(sut)
+                .isNotNull()
+                .usingRecursiveFieldByFieldElementComparator()
+                .containsExactly(expectedLessonLogNotificationDTO());
 
         verify(lessonNotificationLogRepository).findByDeliveryMethodIgnoreCase("method");
         verifyNoMoreInteractions(lessonNotificationLogRepository);
@@ -126,8 +131,9 @@ class LessonNotificationLogServiceTest {
 
         List<LessonNotificationLogResponseDTO> sut = lessonNotificationLogService.getAllByDeliveryMethod("method");
 
-        assertNotNull(sut);
-        assertTrue(sut.isEmpty());
+        assertThat(sut)
+                .isNotNull()
+                .isEmpty();
 
         verify(lessonNotificationLogRepository).findByDeliveryMethodIgnoreCase("method");
         verifyNoMoreInteractions(lessonNotificationLogRepository);
