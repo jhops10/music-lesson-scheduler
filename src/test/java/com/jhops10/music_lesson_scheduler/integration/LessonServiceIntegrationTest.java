@@ -2,6 +2,7 @@ package com.jhops10.music_lesson_scheduler.integration;
 
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonResponseDTO;
+import com.jhops10.music_lesson_scheduler.dto.lesson.LessonUpdateDTO;
 import com.jhops10.music_lesson_scheduler.exceptions.LessonNotFoundException;
 import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Lesson;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +44,7 @@ public class LessonServiceIntegrationTest {
 
     private final Long defaultId = 1L;
     private final Long nonExistingId = 99999999L;
+    private final LocalDateTime updatedStartTime = LocalDateTime.of(2025, 9, 20, 14, 0);
     private Student defaultStudent;
     private Lesson defaultLesson;
 
@@ -141,6 +144,30 @@ public class LessonServiceIntegrationTest {
     @Test
     void getById_shouldThrowException_whenIdDoesNotExist() {
         assertThatThrownBy(() -> lessonService.getById(nonExistingId))
+                .isInstanceOf(LessonNotFoundException.class);
+    }
+
+    @Test
+    void updateLesson_shouldReturnUpdatedLesson_whenIdExists() {
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
+
+        LessonResponseDTO savedLesson = lessonService.create(requestDTO);
+
+        LessonUpdateDTO updateDTO = new LessonUpdateDTO(updatedStartTime, 2);
+
+        LessonResponseDTO updatedLesson = lessonService.update(savedLesson.id(), updateDTO);
+
+        assertThat(updatedLesson.startTime()).isEqualTo(updatedStartTime);
+        assertThat(updatedLesson.notifyBeforeMinutes()).isEqualTo(updateDTO.notifyBeforeMinutes());
+        assertThat(updatedLesson.studentName()).isEqualTo(savedLesson.studentName());
+        assertThat(updatedLesson.instrument()).isEqualTo(savedLesson.instrument());
+    }
+
+    @Test
+    void updateLesson_shouldThrowException_whenIdDoesNotExist() {
+        LessonUpdateDTO updateDTO = new LessonUpdateDTO(updatedStartTime, 2);
+
+        assertThatThrownBy(() -> lessonService.update(nonExistingId, updateDTO))
                 .isInstanceOf(LessonNotFoundException.class);
     }
 
