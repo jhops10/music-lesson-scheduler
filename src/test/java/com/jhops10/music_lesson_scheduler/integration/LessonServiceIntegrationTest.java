@@ -125,7 +125,23 @@ public class LessonServiceIntegrationTest {
                 .isEmpty();
     }
 
+    @Test
+    void getById_shouldReturnLesson_whenIdExists() {
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
 
+        LessonResponseDTO savedLesson = lessonService.create(requestDTO);
 
+        LessonResponseDTO lesson = lessonService.getById(savedLesson.id());
+
+        assertThat(lesson)
+                .usingRecursiveComparison()
+                .isEqualTo(savedLesson);
+    }
+
+    @Test
+    void getById_shouldThrowException_whenIdDoesNotExist() {
+        assertThatThrownBy(() -> lessonService.getById(nonExistingId))
+                .isInstanceOf(LessonNotFoundException.class);
+    }
 
 }
