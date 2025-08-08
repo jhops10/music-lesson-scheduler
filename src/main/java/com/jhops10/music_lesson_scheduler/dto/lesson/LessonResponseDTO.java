@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 public record LessonResponseDTO(
         Long id,
         LocalDateTime startTime,
-        Integer notityBeforeMinutes,
+        Integer notifyBeforeMinutes,
         String studentName,
         String instrument
 ) {

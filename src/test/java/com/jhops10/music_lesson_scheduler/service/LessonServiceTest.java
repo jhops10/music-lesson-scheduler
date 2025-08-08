@@ -183,7 +183,7 @@ class LessonServiceTest {
                 .extracting(
                         LessonResponseDTO::id,
                         LessonResponseDTO::startTime,
-                        LessonResponseDTO::notityBeforeMinutes
+                        LessonResponseDTO::notifyBeforeMinutes
                 )
                 .containsExactly(
                         updatedLesson.getId(),
