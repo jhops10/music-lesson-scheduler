@@ -171,4 +171,22 @@ public class LessonServiceIntegrationTest {
                 .isInstanceOf(LessonNotFoundException.class);
     }
 
+    @Test
+    void deleteLesson_shouldDeleteLesson_whenIdExists() {
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
+
+        LessonResponseDTO savedLesson = lessonService.create(requestDTO);
+
+        lessonService.delete(savedLesson.id());
+
+        assertThatThrownBy(() -> lessonService.getById(savedLesson.id()))
+                .isInstanceOf(LessonNotFoundException.class);
+    }
+
+    @Test
+    void deleteLesson_shouldThrowException_whenIdDoesNotExist() {
+        assertThatThrownBy(() -> lessonService.delete(nonExistingId))
+                .isInstanceOf(LessonNotFoundException.class);
+    }
+
 }
