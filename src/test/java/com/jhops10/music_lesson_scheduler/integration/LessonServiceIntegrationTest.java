@@ -2,6 +2,7 @@ package com.jhops10.music_lesson_scheduler.integration;
 
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.lesson.LessonResponseDTO;
+import com.jhops10.music_lesson_scheduler.dto.lesson.LessonUpdateDTO;
 import com.jhops10.music_lesson_scheduler.exceptions.LessonNotFoundException;
 import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Lesson;
@@ -18,7 +19,9 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,19 +44,21 @@ public class LessonServiceIntegrationTest {
 
     private final Long defaultId = 1L;
     private final Long nonExistingId = 99999999L;
+    private final LocalDateTime updatedStartTime = LocalDateTime.of(2025, 9, 20, 14, 0);
     private Student defaultStudent;
     private Lesson defaultLesson;
 
 
     @BeforeEach
     void setUp() {
+        cleanDatabase();
         defaultStudent = createNewStudent();
         defaultLesson = createNewLesson(defaultStudent);
         studentRepository.save(defaultStudent);
     }
 
-    @BeforeEach
-    void cleanDatabasse() {
+
+    private void cleanDatabase() {
         lessonRepository.deleteAll();
         studentRepository.deleteAll();
     }
@@ -72,9 +77,16 @@ public class LessonServiceIntegrationTest {
                 .create();
     }
 
+    private LessonRequestDTO createDefaultLessonRequestDTO(Long studentId) {
+        return new LessonRequestDTO(
+                studentId,
+                defaultLesson.getStartTime(),
+                defaultLesson.getNotifyBeforeMinutes());
+    }
+
     @Test
     void createLesson_shouldPersistLessonWithStudent_whenStudentExists() {
-        LessonRequestDTO requestDTO = new LessonRequestDTO(defaultStudent.getId(), defaultLesson.getStartTime(), defaultLesson.getNotifyBeforeMinutes());
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
 
         LessonResponseDTO savedLesson = lessonService.create(requestDTO);
 
@@ -88,10 +100,93 @@ public class LessonServiceIntegrationTest {
 
     @Test
     void createLesson_shouldThrowException_whenStudentDoesNotExist() {
-        LessonRequestDTO requestDTO = new LessonRequestDTO(nonExistingId, defaultLesson.getStartTime(), defaultLesson.getNotifyBeforeMinutes());
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(nonExistingId);
 
         assertThatThrownBy(() -> lessonService.create(requestDTO))
                 .isInstanceOf(StudentNotFoundException.class);
+    }
+
+    @Test
+    void getAll_shouldReturnAllLessons_whenLessonsExist() {
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
+
+        LessonResponseDTO savedLesson = lessonService.create(requestDTO);
+
+        List<LessonResponseDTO> lessons = lessonService.getAll();
+
+        assertThat(lessons)
+                .usingRecursiveFieldByFieldElementComparator()
+                .containsExactly(savedLesson);
+    }
+
+    @Test
+    void getAll_shouldReturnEmptyList_whenLessonsDoNotExist() {
+        List<LessonResponseDTO> lessons = lessonService.getAll();
+
+        assertThat(lessons)
+                .isNotNull()
+                .isEmpty();
+    }
+
+    @Test
+    void getById_shouldReturnLesson_whenIdExists() {
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
+
+        LessonResponseDTO savedLesson = lessonService.create(requestDTO);
+
+        LessonResponseDTO lesson = lessonService.getById(savedLesson.id());
+
+        assertThat(lesson)
+                .usingRecursiveComparison()
+                .isEqualTo(savedLesson);
+    }
+
+    @Test
+    void getById_shouldThrowException_whenIdDoesNotExist() {
+        assertThatThrownBy(() -> lessonService.getById(nonExistingId))
+                .isInstanceOf(LessonNotFoundException.class);
+    }
+
+    @Test
+    void updateLesson_shouldReturnUpdatedLesson_whenIdExists() {
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
+
+        LessonResponseDTO savedLesson = lessonService.create(requestDTO);
+
+        LessonUpdateDTO updateDTO = new LessonUpdateDTO(updatedStartTime, 2);
+
+        LessonResponseDTO updatedLesson = lessonService.update(savedLesson.id(), updateDTO);
+
+        assertThat(updatedLesson.startTime()).isEqualTo(updatedStartTime);
+        assertThat(updatedLesson.notifyBeforeMinutes()).isEqualTo(updateDTO.notifyBeforeMinutes());
+        assertThat(updatedLesson.studentName()).isEqualTo(savedLesson.studentName());
+        assertThat(updatedLesson.instrument()).isEqualTo(savedLesson.instrument());
+    }
+
+    @Test
+    void updateLesson_shouldThrowException_whenIdDoesNotExist() {
+        LessonUpdateDTO updateDTO = new LessonUpdateDTO(updatedStartTime, 2);
+
+        assertThatThrownBy(() -> lessonService.update(nonExistingId, updateDTO))
+                .isInstanceOf(LessonNotFoundException.class);
+    }
+
+    @Test
+    void deleteLesson_shouldDeleteLesson_whenIdExists() {
+        LessonRequestDTO requestDTO = createDefaultLessonRequestDTO(defaultStudent.getId());
+
+        LessonResponseDTO savedLesson = lessonService.create(requestDTO);
+
+        lessonService.delete(savedLesson.id());
+
+        assertThatThrownBy(() -> lessonService.getById(savedLesson.id()))
+                .isInstanceOf(LessonNotFoundException.class);
+    }
+
+    @Test
+    void deleteLesson_shouldThrowException_whenIdDoesNotExist() {
+        assertThatThrownBy(() -> lessonService.delete(nonExistingId))
+                .isInstanceOf(LessonNotFoundException.class);
     }
 
 }
