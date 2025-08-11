@@ -2,6 +2,7 @@ package com.jhops10.music_lesson_scheduler.integration;
 
 import com.jhops10.music_lesson_scheduler.dto.student.StudentRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.student.StudentResponseDTO;
+import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Student;
 import com.jhops10.music_lesson_scheduler.repository.StudentRepository;
 import com.jhops10.music_lesson_scheduler.service.StudentService;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.instancio.Select.field;
 
 @SpringBootTest
@@ -33,6 +35,7 @@ public class StudentServiceIntegrationTest {
     private StudentRepository studentRepository;
 
     private Student defaultStudent;
+    private final Long nonExistingId = 9999999L;
 
     @BeforeEach
     void setUp() {
@@ -92,6 +95,25 @@ public class StudentServiceIntegrationTest {
         assertThat(students)
                 .isNotNull()
                 .isEmpty();
+    }
+
+    @Test
+    void getById_shouldReturnStudent_whenIdExists() {
+        StudentRequestDTO requestDTO = createDefaultStudentRequestDTO();
+
+        StudentResponseDTO savedStudent = studentService.create(requestDTO);
+
+        StudentResponseDTO foundStudent = studentService.getById(savedStudent.id());
+
+        assertThat(foundStudent)
+                .usingRecursiveComparison()
+                .isEqualTo(savedStudent);
+    }
+
+    @Test
+    void getById_shouldThrowException_whenIdDoesNotExist() {
+        assertThatThrownBy(() -> studentService.getById(nonExistingId))
+                .isInstanceOf(StudentNotFoundException.class);
     }
 
 
