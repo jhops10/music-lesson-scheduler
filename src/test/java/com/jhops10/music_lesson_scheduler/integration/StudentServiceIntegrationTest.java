@@ -2,6 +2,7 @@ package com.jhops10.music_lesson_scheduler.integration;
 
 import com.jhops10.music_lesson_scheduler.dto.student.StudentRequestDTO;
 import com.jhops10.music_lesson_scheduler.dto.student.StudentResponseDTO;
+import com.jhops10.music_lesson_scheduler.dto.student.StudentUpdateDTO;
 import com.jhops10.music_lesson_scheduler.exceptions.StudentNotFoundException;
 import com.jhops10.music_lesson_scheduler.model.Student;
 import com.jhops10.music_lesson_scheduler.repository.StudentRepository;
@@ -116,5 +117,27 @@ public class StudentServiceIntegrationTest {
                 .isInstanceOf(StudentNotFoundException.class);
     }
 
+    @Test
+    void updateStudent_shouldUpdateStudent_whenIdExists() {
+        StudentRequestDTO requestDTO = createDefaultStudentRequestDTO();
+
+        StudentResponseDTO savedStudent = studentService.create(requestDTO);
+
+        StudentUpdateDTO updateDTO = new StudentUpdateDTO(Instancio.create(String.class), Instancio.create(String.class));
+
+        StudentResponseDTO updatedStudent = studentService.update(savedStudent.id(), updateDTO);
+
+        assertThat(updatedStudent.id()).isEqualTo(savedStudent.id());
+        assertThat(updatedStudent.studentName()).isEqualTo(updateDTO.studentName());
+        assertThat(updatedStudent.instrument()).isEqualTo(updateDTO.instrument());
+    }
+
+    @Test
+    void updateStudent_shouldThrowException_whenIdDoesNotExist() {
+        StudentUpdateDTO updateDTO = new StudentUpdateDTO(Instancio.create(String.class), Instancio.create(String.class));
+
+        assertThatThrownBy(() -> studentService.update(nonExistingId, updateDTO))
+                .isInstanceOf(StudentNotFoundException.class);
+    }
 
 }
