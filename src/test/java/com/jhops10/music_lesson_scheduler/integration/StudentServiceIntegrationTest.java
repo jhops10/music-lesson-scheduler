@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.instancio.Select.field;
@@ -69,6 +70,28 @@ public class StudentServiceIntegrationTest {
         assertThat(foundStudent.getId()).isNotNull();
         assertThat(foundStudent.getStudentName()).isEqualTo(defaultStudent.getStudentName());
         assertThat(foundStudent.getInstrument()).isEqualTo(defaultStudent.getInstrument());
+    }
+
+    @Test
+    void getAll_shouldReturnAllStudents_whenStudentsExist() {
+        StudentRequestDTO requestDTO = createDefaultStudentRequestDTO();
+
+        StudentResponseDTO savedStudent = studentService.create(requestDTO);
+
+        List<StudentResponseDTO> students = studentService.getAll();
+
+        assertThat(students)
+                .usingRecursiveFieldByFieldElementComparator()
+                .containsExactly(savedStudent);
+    }
+
+    @Test
+    void getAll_shouldReturnEmptyList_whenStudentDoNotExist() {
+        List<StudentResponseDTO> students = studentService.getAll();
+
+        assertThat(students)
+                .isNotNull()
+                .isEmpty();
     }
 
 
