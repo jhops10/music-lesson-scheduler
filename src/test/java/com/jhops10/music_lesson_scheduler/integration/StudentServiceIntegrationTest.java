@@ -140,4 +140,22 @@ public class StudentServiceIntegrationTest {
                 .isInstanceOf(StudentNotFoundException.class);
     }
 
+    @Test
+    void deleteStudent_shouldDeleteStudent_whenIdExists() {
+        StudentRequestDTO requestDTO = createDefaultStudentRequestDTO();
+
+        StudentResponseDTO savedStudent = studentService.create(requestDTO);
+
+        studentService.delete(savedStudent.id());
+
+        assertThatThrownBy(() -> studentService.delete(savedStudent.id()))
+                .isInstanceOf(StudentNotFoundException.class);
+    }
+
+    @Test
+    void deleteStudent_shouldThrowException_whenIdDoesNotExist() {
+        assertThatThrownBy(() -> studentService.delete(nonExistingId))
+                .isInstanceOf(StudentNotFoundException.class);
+    }
+
 }
