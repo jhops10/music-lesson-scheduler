@@ -35,31 +35,26 @@ public class StudentServiceIntegrationTest {
     @Autowired
     private StudentRepository studentRepository;
 
-    private Student defaultStudent;
+
     private final Long nonExistingId = 9999999L;
 
     @BeforeEach
     void setUp() {
         cleanDatabase();
-        defaultStudent = createNewStudent();
     }
 
     private void cleanDatabase() {
         studentRepository.deleteAll();
     }
 
-    private Student createNewStudent() {
-        return Instancio.of(Student.class)
+
+    private StudentRequestDTO createDefaultStudentRequestDTO() {
+        Student student = Instancio.of(Student.class)
                 .ignore(field(Student::getId))
                 .set(field(Student::getLessons), new ArrayList<>())
                 .create();
-    }
 
-    private StudentRequestDTO createDefaultStudentRequestDTO() {
-        return new StudentRequestDTO(
-                defaultStudent.getStudentName(),
-                defaultStudent.getInstrument()
-        );
+        return new StudentRequestDTO(student.getStudentName(), student.getInstrument());
     }
 
     @Test
@@ -72,8 +67,8 @@ public class StudentServiceIntegrationTest {
                 .orElseThrow(() -> new AssertionError("Lesson not found"));
 
         assertThat(foundStudent.getId()).isNotNull();
-        assertThat(foundStudent.getStudentName()).isEqualTo(defaultStudent.getStudentName());
-        assertThat(foundStudent.getInstrument()).isEqualTo(defaultStudent.getInstrument());
+        assertThat(foundStudent.getStudentName()).isEqualTo(requestDTO.studentName());
+        assertThat(foundStudent.getInstrument()).isEqualTo(requestDTO.instrument());
     }
 
     @Test
