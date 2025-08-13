@@ -104,4 +104,27 @@ class LessonNotificationLogServiceIntegrationTest {
                 .isEmpty();
     }
 
+    @Test
+    void getAllByDeliveryMethod_shouldReturnLogs_whenLogsExistForDeliveryMethod() {
+        String method = defaultNotificationLog.getDeliveryMethod();
+
+        List<LessonNotificationLogResponseDTO> result = lessonNotificationLogService.getAllByDeliveryMethod(method);
+
+        assertThat(result)
+                .isNotNull()
+                .hasSize(1)
+                .allSatisfy(dto -> {
+                    assertThat(dto.deliveryMethod()).isEqualTo(method);
+                    assertThat(dto.lessonId()).isEqualTo(defaultLesson.getId());
+                });
+    }
+
+    @Test
+    void getAllByDeliveryMethod_shouldReturnEmptyList_whenLogsDoNotExist() {
+        List<LessonNotificationLogResponseDTO> result = lessonNotificationLogService.getAllByDeliveryMethod("inexistente");
+
+        assertThat(result)
+                .isNotNull()
+                .isEmpty();
+    }
 }
